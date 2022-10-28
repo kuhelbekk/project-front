@@ -1,11 +1,246 @@
-<html>
+<html lang="En">
 <head>
     <title>RPG</title>
     <script src=https://code.jquery.com/jquery-3.6.0.min.js></script>
     <link href="/css/my.css" rel="stylesheet">
+    <script>
+
+        function get_players(page_number){
+            console.log(page_number);
+            $('tr:has(td)').remove();
+            $('button.pgn_btn_style').remove();
+            let url =   "/rest/players?";
+            let totalCount = get_count();
+            let countPerPages = $('#counter').val();
+            console.log('countPerPages = '+countPerPages);
+            if (countPerPages == null) {
+                countPerPages = 3;
+            }
+
+            let pageCount = Math.ceil(totalCount/countPerPages);
+            if (page_number==null){
+                page_number=0
+            }
+
+            url = url.concat( 'pageSize=').concat(countPerPages).concat( '&pageNumber=').concat(page_number);
+            console.log('url = '+url);
+            $.get(url, function(response){
+                $.each(response, function(i,item){
+                    $('<tr>').html('<td>'
+                        +item.id + '</td><td>'
+                        +item.name + '</td><td>'
+                        +item.title + '</td><td>'
+                        +item.race + '</td><td>'
+                        +item.profession + '</td><td>'
+                        +item.level + '</td><td>'
+                        +new Date(item.birthday).toLocaleDateString() + '</td><td>'
+                        +item.banned +'</td><td>'
+                        +'<button id = \'btn_edit_'+item.id+'\' onclick=\'editAccount('+item.id+')\' >'
+                        +'<img src = \'/img/edit.png\'>'
+                        +'</button>' +'</td><td>'
+                        +'<button id = \'btn_delete_'+item.id+'\'onclick=\'deleteAccount('+item.id+')\' >'
+                        +'<img src = \'/img/delete.png\'>'
+                        +'</button>' +'</td>'
+                    ).appendTo("#table");
+                });
+            });
+
+            for (let i = 1; i <= pageCount; i++) {
+                let button_tag = '<button id=\'pb_btn_'+i+'\' >'+ i+'</button>';
+                let btn = $(button_tag)
+                    .attr('onclick','get_players('+(i-1)+')')
+                    .addClass('pgn_btn_style');
+                $('#paging_btns').append(btn);
+            }
+            let active_btn = '#pb_btn_' + (page_number+1);
+            $(active_btn).css('color','red');
+        }
+
+        function get_count(){
+            let url = "/rest/players/count";
+            let res = 0;
+            $.ajax({
+                url: url,
+                async: false,
+                success: function(result){
+                   res = parseInt(result);
+                }
+            });
+            return res;
+        }
+
+        function deleteAccount(id){
+            console.log("deleteAccount - "+ id);
+            let url  = "/rest/players/" + id;
+            $.ajax({
+                url: url,
+                type:'DELETE',
+                success: function (){
+                    get_players(getCurrentPage());
+                }
+
+            });
+        }
+
+        function editAccount(id){
+            console.log("editAccount - "+ id);
+            let url  = "/rest/players/" + id;
+
+            let identifier_edit = '#btn_edit_'+id;
+            let identifier_delete = '#btn_delete_'+id;
+            $(identifier_delete).remove();
+            let save_image_tag  =  "<img src = '/img/save.png'>";
+            $(identifier_edit).html(save_image_tag)
+
+            let tr_elements = $(identifier_edit).parent().parent().children();
+            let  td_name = tr_elements[1];
+            td_name.innerHTML  = '<input id="input_name_'+id+'" type="text" value ="' +td_name.innerHTML+'">';
+            let  td_title = tr_elements[2];
+            td_title.innerHTML  = '<input id="input_title_'+id+'" type="text" value ="' +td_title.innerHTML+'">';
+
+
+            let  td_race = tr_elements[3];
+            let race_id =  '#select_race_'+id;
+            let race_current_value =  td_race.innerHTML;
+            td_race.innerHTML = getSelectRace(id);
+            $(race_id).val(race_current_value).change();
+
+
+            let  td_prof = tr_elements[4];
+            let prof_id =  '#select_prof_'+id;
+            let prof_current_value =  td_prof.innerHTML;
+            td_prof.innerHTML = getSelectProfession(id);
+            $(prof_id).val(prof_current_value).change();
+
+            let  td_banned = tr_elements[7];
+            let banned_id =  '#select_banned_'+id;
+            let banned_current_value =  td_banned.innerHTML;
+            td_banned.innerHTML = getSelectBanned(id);
+            $(banned_id).val(banned_current_value).change();
+
+            let propety_save_tag = "saveAcc("+id+")";
+            $(identifier_edit).attr('onClick',propety_save_tag);
+        }
+
+        function saveAcc(id){
+            let value_name = $('#input_name_'+id).val();
+            let value_title = $('#input_title_'+id).val();
+            let value_race = $('#select_race_'+id).val();
+            let value_prof = $('#select_prof_'+id).val();
+            let value_banned = $('#select_banned_'+id).val();
+
+            let url = '/rest/players/'+id;
+            $.ajax({
+                url: url,
+                type: "POST",
+                dataType: 'json',
+                contentType: 'application/json;charsset=UTF-8',
+                async: false,
+                data: JSON.stringify({
+                    "name": value_name,
+                    "title": value_title,
+                    "race": value_race,
+                    "profession": value_prof,
+                    "banned": value_banned
+                }),
+                success: function () {
+                    get_players(getCurrentPage());
+                }
+            });
+        }
+
+
+        function getSelectBanned(id){
+            let banned_id = "select_banned_"+id;
+            return "<label for='banned'></label>"
+                +"<select id = "+banned_id+" name ='banned'>"
+                +"<option value='true' >true</option>"
+                +"<option value='false' >false</option>"
+                +"</select>";
+        }
+
+
+
+        function getSelectProfession(id){
+            let prof_id = "select_prof_"+id;
+            return "<label for='prof'></label>"
+                +"<select id = "+prof_id+" name ='prof'>"
+                +"<option value='WARRIOR' >WARRIOR</option>"
+                +"<option value='ROGUE' >ROGUE</option>"
+                +"<option value='SORCERER' >SORCERER</option>"
+                +"<option value='CLERIC' >CLERIC</option>"
+                +"<option value='PALADIN' >PALADIN</option>"
+                +"<option value='NAZGUL' >NAZGUL</option>"
+                +"<option value='WARLOCK' >WARLOCK</option>"
+                +"<option value='DRUID' >DRUID</option>"
+                +"</select>";
+        }
+
+        function getSelectRace(id){
+            let race_id = "select_race_"+id;
+            return "<label for='race'></label>"
+                +"<select id = "+race_id+" name ='race'>"
+                +"<option value='HUMAN' >HUMAN</option>"
+                +"<option value='DWARF' >DWARF</option>"
+                +"<option value='ELF' >ELF</option>"
+                +"<option value='GIANT' >GIANT</option>"
+                +"<option value='ORC' >ORC</option>"
+                +"<option value='TROLL' >TROLL</option>"
+                +"<option value='HOBBI' >HOBBI</option>"
+                +"</select>";
+        }
+
+        function getCurrentPage(){
+            let curPg  = 1;
+            $('button:parent(div)').each(function (){
+                if ($(this).css('color')==='rgb(255,0,0)'){
+                    curPg =$(this).text();
+                }
+            });
+            console.log("getCurrentPage - "+ (curPg-1));
+            return parseInt(curPg)-1
+        }
+    </script>
+
 </head>
-<body>
+<body onload="get_players(0)">
 <h1>RPG admin panel</h1>
+<label for = 'counter'> Counte per page: </label>
+<select id = "counter" onchange="get_players(0)">
+    <option value="3">3</option>
+    <option value="5">5</option>
+    <option value="10">10</option>
+    <option value="20">20</option>
+</select>
+
+<table id="table">
+    <tr>
+        <th>#</th>
+        <th>Name</th>
+        <th>Title</th>
+        <th>Race</th>
+        <th>Profession</th>
+        <th>Level</th>
+        <th>Birthday</th>
+        <th>Banned</th>
+        <th>Edit</th>
+        <th>Delete</th>
+    </tr>
+    <tr>
+        <td>No</td>
+        <td>Connect</td>
+        <td>To</td>
+        <td>Server</td>
+        <td>or</td>
+        <td>Server</td>
+        <td>error</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+    </tr>
+
+</table>
+<div    id="paging_btns" >Pages:  </div>
 
 </body>
 </html>
