@@ -84,7 +84,6 @@
 
         function editAccount(id){
             console.log("editAccount - "+ id);
-            let url  = "/rest/players/" + id;
 
             let identifier_edit = '#btn_edit_'+id;
             let identifier_delete = '#btn_delete_'+id;
@@ -128,7 +127,6 @@
             let value_race = $('#select_race_'+id).val();
             let value_prof = $('#select_prof_'+id).val();
             let value_banned = $('#select_banned_'+id).val();
-
             let url = '/rest/players/'+id;
             $.ajax({
                 url: url,
@@ -149,6 +147,52 @@
             });
         }
 
+
+        function createAcc(){
+            let value_name = $('#input_name_new').val();
+            let value_title = $('#input_title_new').val();
+            let value_race = $('#input_race_new').val();
+            let value_prof = $('#input_prof_new').val();
+            let value_level = $('#input_level_new').val();
+            let value_birthday = $('#input_birthday_new').val();
+            let value_banned = $('#input_banned_new').val();
+            let url = '/rest/players';
+
+            console.log(value_name);
+            console.log(value_title );
+            console.log(value_race);
+            console.log(value_prof);
+            console.log(value_level);
+            console.log(value_birthday);
+            console.log(value_banned);
+
+            $.ajax({
+                url: url,
+                type: "POST",
+                dataType: 'json',
+                contentType: 'application/json;charsset=UTF-8',
+                async: false,
+                data: JSON.stringify({
+                    "name": value_name,
+                    "title": value_title,
+                    "race": value_race,
+                    "profession": value_prof,
+                    "banned": value_banned,
+                    "level": value_level,
+                    "birthday": new Date(value_birthday).getTime()
+                }),
+                success: function () {
+                    $('#input_name_new').val("");
+                    $('#input_title_new').val("");
+                    $('#input_race_new').val("");
+                    $('#input_prof_new').val("");
+                    $('#input_level_new').val("");
+                    $('#input_birthday_new').val("");
+                    $('#input_banned_new').val("");
+                    get_players(getCurrentPage());
+                }
+            });
+        }
 
         function getSelectBanned(id){
             let banned_id = "select_banned_"+id;
@@ -186,18 +230,17 @@
                 +"<option value='GIANT' >GIANT</option>"
                 +"<option value='ORC' >ORC</option>"
                 +"<option value='TROLL' >TROLL</option>"
-                +"<option value='HOBBI' >HOBBI</option>"
+                +"<option value='HOBBIT' >HOBBI</option>"
                 +"</select>";
         }
 
         function getCurrentPage(){
             let curPg  = 1;
             $('button:parent(div)').each(function (){
-                if ($(this).css('color')==='rgb(255,0,0)'){
+                if ($(this).css('color')  === 'rgb(255, 0, 0)'){
                     curPg =$(this).text();
                 }
             });
-            console.log("getCurrentPage - "+ (curPg-1));
             return parseInt(curPg)-1
         }
     </script>
@@ -241,6 +284,58 @@
 
 </table>
 <div    id="paging_btns" >Pages:  </div>
+<hr>
+<h2>Create new Accaunt:</h2>
+<label for =  "input_name_new" >Name:</label>
+<input type="text" id = "input_name_new" name = 'tame'  required size = '12' maxlength = '12'>
+<br>
+<label for =  "input_title_new" >Title:</label>
+<input type="text" id = "input_title_new" name = 'title'  required size = '30' maxlength = '30'>
+<br>
+<label for =  'input_race_new' >Race:</label>
+<select id = 'input_race_new' name ='race'>
+    <option value='HUMAN' >HUMAN</option>
+    <option value='DWARF' >DWARF</option>
+    <option value='ELF' >ELF</option>
+    <option value='GIANT' >GIANT</option>
+    <option value='ORC' >ORC</option>
+    <option value='TROLL' >TROLL</option>
+    <option value='HOBBIT' >HOBBI</option>
+</select>
+<br>
+<label for =  'input_prof_new' >Profession:</label>
+<select id = 'input_prof_new' name ='prof'>
+    <option value='WARRIOR' >WARRIOR</option>
+    <option value='ROGUE' >ROGUE</option>
+    <option value='SORCERER' >SORCERER</option>
+    <option value='CLERIC' >CLERIC</option>
+    <option value='PALADIN' >PALADIN</option>
+    <option value='NAZGUL' >NAZGUL</option>
+    <option value='WARLOCK' >WARLOCK</option>
+    <option value='DRUID' >DRUID</option>
+</select>
+
+<br>
+<label for =  "input_level_new" >Level:</label>
+<input type="number" id = "input_level_new" name = 'level'  min = '0' max = '100'>
+<br>
+<label for =  "input_birthday_new" >Birthday:</label>
+<input type="date" id = "input_birthday_new" name = 'birthday'  min = '2000-01-01' max = '3000-12-31'>
+<br>
+
+<label for =  'input_banned_new' >Banned: </label>
+<select id = 'input_banned_new' name ='banned'>
+    <option value='false' >false</option>
+    <option value='true' >true</option>
+</select>
+<br>
+<br>
+
+<span>
+    <button type="submit" onclick="createAcc()">Save</button>
+</span>
+
+
 
 </body>
 </html>
